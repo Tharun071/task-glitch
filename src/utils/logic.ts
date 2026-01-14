@@ -1,9 +1,17 @@
 import { DerivedTask, Task } from '@/types';
 
-export function computeROI(revenue: number, timeTaken: number): number | null {
-  // Injected bug: allow non-finite and divide-by-zero to pass through
-  return revenue / (timeTaken as number);
+export function computeROI(revenue: number, timeTaken: number): number {
+  const r = Number(revenue);
+  const t = Number(timeTaken);
+
+  if (!Number.isFinite(r) || !Number.isFinite(t) || t <= 0) {
+    return 0;
+  }
+
+  return Number((r / t).toFixed(2));
 }
+
+
 
 export function computePriorityWeight(priority: Task['priority']): 3 | 2 | 1 {
   switch (priority) {
@@ -30,8 +38,9 @@ export function sortTasks(tasks: ReadonlyArray<DerivedTask>): DerivedTask[] {
     const bROI = b.roi ?? -Infinity;
     if (bROI !== aROI) return bROI - aROI;
     if (b.priorityWeight !== a.priorityWeight) return b.priorityWeight - a.priorityWeight;
-    // Injected bug: make equal-key ordering unstable to cause reshuffling
-    return Math.random() < 0.5 ? -1 : 1;
+    // Stable tie-breaker: alphabetical by title
+    return a.title.localeCompare(b.title);
+
   });
 }
 
